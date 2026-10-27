@@ -9,7 +9,7 @@
   const originalDisplays = new WeakMap();
   const filterNotices = new Map();
   const restoredPosts = new Set();
-  const observerOptions = { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['href', 'datetime', 'lang', 'aria-label', 'data-testid'] };
+  const observerOptions = { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['href', 'src', 'datetime', 'lang', 'aria-label', 'data-testid'] };
   let observer;
   let refreshTimer;
   let lastPagePath = global.location?.pathname || '';
@@ -644,6 +644,10 @@
         if (!article.isConnected) { record.element.remove(); filterNotices.delete(article); }
       }
       document.querySelectorAll(SELECTOR).forEach(renderArticle);
+      global.XA_ACCOUNT_MARKS?.sync([...document.querySelectorAll(SELECTOR)], settings, (article) => {
+        const metric = getArticleMetrics(article);
+        return { id: articleId(article), metric, author: authorHandle(article, metric), text: articleText(article) || metric?.text || '' };
+      });
       renderLeaderboard();
     } finally {
       observer?.observe(document.body, observerOptions);
@@ -660,7 +664,7 @@
 
   function isExtensionNode(node) {
     const element = node.nodeType === 1 ? node : node.parentElement;
-    return Boolean(element?.closest?.(`#${LEADERBOARD_ID}, .${BADGE_CLASS}, .xa-metrics-tooltip, .${NOTICE_CLASS}, #${STYLE_ID}`));
+    return Boolean(element?.closest?.(`#${LEADERBOARD_ID}, .${BADGE_CLASS}, .xa-metrics-tooltip, .${NOTICE_CLASS}, #${STYLE_ID}, #xa-account-marks, #xa-account-mark-style`));
   }
 
   function start() {

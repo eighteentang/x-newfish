@@ -1,6 +1,6 @@
 (function initOptions() {
-  const globalKeys = ['enabled', 'showVelocity', 'leaderboardEnabled', 'leaderboardOpacity', 'leaderboardCollapsed', 'leaderboardSort', 'leaderboardHours', 'leaderboardLimit', 'whitelist'];
-  const checks = new Set(['enabled', 'showVelocity', 'leaderboardEnabled', 'leaderboardCollapsed', 'inheritGlobal', 'filteringEnabled', 'keywordFilterEnabled', 'languageFilterEnabled', 'velocityFilterEnabled']);
+  const globalKeys = ['enabled', 'showVelocity', 'aiLabelsEnabled', 'accountWarningsEnabled', 'leaderboardEnabled', 'leaderboardOpacity', 'leaderboardCollapsed', 'leaderboardSort', 'leaderboardHours', 'leaderboardLimit', 'whitelist'];
+  const checks = new Set(['enabled', 'showVelocity', 'aiLabelsEnabled', 'accountWarningsEnabled', 'leaderboardEnabled', 'leaderboardCollapsed', 'inheritGlobal', 'filteringEnabled', 'keywordFilterEnabled', 'languageFilterEnabled', 'velocityFilterEnabled']);
   const field = (id) => document.querySelector(`#${id}`);
   let settings = XA_CONFIG.mergeSettings({});
   let scope = 'global';
@@ -115,7 +115,7 @@
     globalKeys.forEach((key) => showValue(key, settings[key]));
     renderRules(); renderSummary();
     ready = true; document.body.setAttribute('aria-busy', 'false');
-    field('version').textContent = `v${chrome.runtime?.getManifest?.().version || '0.1.3'}`;
+    field('version').textContent = `v${chrome.runtime?.getManifest?.().version || '0.1.5'}`;
     setStatus('设置已载入 · 仅保存在本机');
   }).catch(() => setStatus('无法读取设置，请重新打开插件。', true));
   field('save').addEventListener('click', () => save());

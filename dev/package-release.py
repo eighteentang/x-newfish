@@ -12,6 +12,7 @@ ROOT = Path(__file__).resolve().parent.parent
 FILES = (
     'manifest.json', 'background.js', 'config.js', 'content.js',
     'metrics-core.js', 'filter-core.js', 'tweet-metrics.js', 'x-net-hook.js',
+    'account-signals.js', 'account-decorations.js',
     'options.html', 'options.css', 'options.js',
     'icons/icon16.png', 'icons/icon32.png', 'icons/icon48.png', 'icons/icon128.png',
     'README.md', 'LICENSE', 'THIRD_PARTY_NOTICES.md',

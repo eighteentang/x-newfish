@@ -2,6 +2,8 @@
   const DEFAULTS = {
     enabled: true,
     showVelocity: true,
+    aiLabelsEnabled: false,
+    accountWarningsEnabled: false,
     keywordFilterEnabled: true,
     keywords: [],
     whitelist: [],
@@ -55,6 +57,8 @@
         .filter((key) => Object.prototype.hasOwnProperty.call(source, key))
         .map((key) => [key, source[key]])),
       ...filters,
+      aiLabelsEnabled: source.aiLabelsEnabled === true,
+      accountWarningsEnabled: source.accountWarningsEnabled === true,
       pageFilters: Object.fromEntries(PAGE_TYPES.filter((key) => source.pageFilters?.[key] && typeof source.pageFilters[key] === 'object')
         .map((key) => [key, filterValues(source.pageFilters[key], filters)])),
       whitelist: normalizeHandles(source.whitelist || []),

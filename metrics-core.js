@@ -57,6 +57,7 @@
       text: String(legacy.full_text || ''),
       language: String(legacy.lang || ''),
       author: String(user?.legacy?.screen_name || user?.core?.screen_name || ''),
+      account: global.XA_ACCOUNT_SIGNALS?.normalizeAccount(user) || {},
       urls: urls.map((url) => String(url?.unwound_url || url?.expanded_url || url?.url || '')).filter(Boolean)
     };
   }
@@ -89,6 +90,7 @@
     merged.text = next.text || previous?.text || '';
     merged.language = next.language || previous?.language || '';
     merged.author = next.author || previous?.author || '';
+    merged.account = { ...(previous?.account || {}), ...(next.account || {}) };
     merged.urls = Array.isArray(next.urls) && next.urls.length ? next.urls.filter((url) => typeof url === 'string') : previous?.urls || [];
     return merged;
   }

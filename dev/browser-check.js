@@ -3,7 +3,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const root = path.resolve(__dirname, '..');
 const files = new Set([
-  'config.js', 'content.js', 'filter-core.js', 'metrics-core.js', 'tweet-metrics.js', 'x-net-hook.js', 'options.js', 'options.css', 'icons/icon32.png',
+  'config.js', 'content.js', 'filter-core.js', 'metrics-core.js', 'tweet-metrics.js', 'x-net-hook.js', 'account-signals.js', 'account-decorations.js', 'options.js', 'options.css', 'icons/icon32.png',
   'dev/browser-check.html', 'dev/browser-storage.js', 'dev/browser-scenarios.js',
   'assets/sponsor/alipay.svg', 'assets/sponsor/wechat.svg'
 ]);
