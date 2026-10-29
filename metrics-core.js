@@ -44,6 +44,9 @@
     if (!/^\d+$/.test(id) || (!Object.hasOwn(legacy, 'full_text') && node.__typename !== 'Tweet')) return null;
     const views = asNumber(node.views?.count ?? legacy.views?.count);
     const user = node.core?.user_results?.result;
+    const quoted = node.quoted_status_result?.result;
+    const reposted = legacy.retweeted_status_result?.result || node.retweeted_status_result?.result;
+    const userHandle = (tweet) => String(tweet?.core?.user_results?.result?.core?.screen_name || tweet?.core?.user_results?.result?.legacy?.screen_name || '');
     const noteUrls = node.note_tweet?.note_tweet_results?.result?.entity_set?.urls;
     const urls = [...(Array.isArray(legacy.entities?.urls) ? legacy.entities.urls : []), ...(Array.isArray(noteUrls) ? noteUrls : [])];
     return {
@@ -54,9 +57,20 @@
       reposts: asNumber(legacy.retweet_count),
       likes: asNumber(legacy.favorite_count),
       bookmarks: asNumber(legacy.bookmark_count),
-      text: String(legacy.full_text || ''),
+      text: String(node.note_tweet?.note_tweet_results?.result?.text || legacy.full_text || ''),
       language: String(legacy.lang || ''),
       author: String(user?.legacy?.screen_name || user?.core?.screen_name || ''),
+      authorId: String(user?.rest_id || user?.legacy?.id_str || ''),
+      replyToId: String(legacy.in_reply_to_status_id_str || ''),
+      replyToAuthor: String(legacy.in_reply_to_screen_name || ''),
+      conversationId: String(legacy.conversation_id_str || ''),
+      quoteId: String(quoted?.rest_id || legacy.quoted_status_id_str || ''),
+      quoteAuthor: userHandle(quoted),
+      quoteText: String(quoted?.legacy?.full_text || ''),
+      isRepost: Boolean(reposted),
+      repostId: String(reposted?.rest_id || ''),
+      repostAuthor: userHandle(reposted),
+      repostText: String(reposted?.legacy?.full_text || ''),
       account: global.XA_ACCOUNT_SIGNALS?.normalizeAccount(user) || {},
       urls: urls.map((url) => String(url?.unwound_url || url?.expanded_url || url?.url || '')).filter(Boolean)
     };
@@ -91,6 +105,8 @@
     merged.language = next.language || previous?.language || '';
     merged.author = next.author || previous?.author || '';
     merged.account = { ...(previous?.account || {}), ...(next.account || {}) };
+    for (const key of ['authorId', 'replyToId', 'replyToAuthor', 'conversationId', 'quoteId', 'quoteAuthor', 'quoteText', 'repostId', 'repostAuthor', 'repostText']) merged[key] = next[key] || previous?.[key] || '';
+    merged.isRepost = typeof next.isRepost === 'boolean' ? next.isRepost : previous?.isRepost === true;
     merged.urls = Array.isArray(next.urls) && next.urls.length ? next.urls.filter((url) => typeof url === 'string') : previous?.urls || [];
     return merged;
   }

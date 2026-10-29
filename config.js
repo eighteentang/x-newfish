@@ -18,6 +18,8 @@
     leaderboardOpacity: 0.1,
     leaderboardEnabled: true,
     leaderboardCollapsed: false,
+    leaderboardPosition: null,
+    leaderboardDock: { edge: 'right', y: 0.25 },
     leaderboardSort: 'velocity',
     leaderboardHours: 0,
     leaderboardLimit: 10
@@ -59,6 +61,9 @@
       ...filters,
       aiLabelsEnabled: source.aiLabelsEnabled === true,
       accountWarningsEnabled: source.accountWarningsEnabled === true,
+      leaderboardPosition: source.leaderboardPosition && Number.isFinite(source.leaderboardPosition.x) && Number.isFinite(source.leaderboardPosition.y)
+        ? { x: Math.max(0, Math.min(1, source.leaderboardPosition.x)), y: Math.max(0, Math.min(1, source.leaderboardPosition.y)) } : null,
+      leaderboardDock: { edge: source.leaderboardDock?.edge === 'left' ? 'left' : 'right', y: Number.isFinite(source.leaderboardDock?.y) ? Math.max(0, Math.min(1, source.leaderboardDock.y)) : 0.25 },
       pageFilters: Object.fromEntries(PAGE_TYPES.filter((key) => source.pageFilters?.[key] && typeof source.pageFilters[key] === 'object')
         .map((key) => [key, filterValues(source.pageFilters[key], filters)])),
       whitelist: normalizeHandles(source.whitelist || []),

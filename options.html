@@ -4,7 +4,7 @@
 <body aria-busy="true">
 <div class="app">
   <header class="app-header">
-    <div class="brand"><img src="icons/icon32.png" width="34" height="34" alt=""><div><h1>X-Newfish<span id="version">v0.1.5</span></h1><p>把注意力留给好内容</p></div></div>
+    <div class="brand"><img src="icons/icon32.png" width="34" height="34" alt=""><div><h1>X-Newfish<span id="version">v0.2.0</span></h1><p>把注意力留给好内容</p></div></div>
     <label class="master"><input id="enabled" type="checkbox" class="switch" aria-label="启用 X-Newfish"><span id="powerState">运行中</span></label>
   </header>
   <nav class="tabs" role="tablist" aria-label="设置分类">
@@ -15,6 +15,7 @@
   <main class="panels">
     <section id="panel-common" role="tabpanel" aria-labelledby="tab-common">
       <div class="intro"><span class="eyebrow">YOUR TIMELINE, YOUR PACE</span><h2>少一点噪音。<br>多一点值得停留。</h2><span class="intro-mark" aria-hidden="true">↗</span></div>
+      <div class="two-columns manager-links"><button id="openRelationships" type="button">关系管理 ↗</button><button id="openTrends" type="button">趋势监测 ↗</button></div>
       <div class="card">
         <label class="toggle-row"><span><strong>流速徽章</strong><small>查看帖子发布以来的平均浏览量 / 小时</small></span><input id="showVelocity" class="switch" type="checkbox" aria-label="显示流速徽章"></label>
         <label class="toggle-row"><span><strong>本页排行榜</strong><small>从已加载的帖子里发现值得看的内容</small></span><input id="leaderboardEnabled" class="switch" type="checkbox" aria-label="显示本页排行榜"></label>
@@ -56,9 +57,10 @@
         <label class="field"><span>排序依据</span><select id="leaderboardSort"><option value="velocity">平均流速</option><option value="views">浏览量</option><option value="likes">点赞数</option><option value="bookmarks">收藏数</option></select></label>
         <div class="two-columns"><label class="field"><span>发帖时间</span><select id="leaderboardHours"><option value="0">全部时间</option><option value="1">最近 1 小时</option><option value="24">最近 24 小时</option><option value="168">最近 7 天</option></select></label><label class="field"><span>显示条数</span><select id="leaderboardLimit"><option value="10">Top 10</option><option value="20">Top 20</option><option value="50">Top 50</option></select></label></div>
         <label class="field range-field"><span>背景不透明度 <b id="leaderboardOpacityValue">10%</b></span><input id="leaderboardOpacity" type="range" min="0" max="1" step="0.01" value="0.1"></label>
-        <label class="toggle-row"><span><strong>收起榜单</strong><small>保留标题，减少页面遮挡。</small></span><input id="leaderboardCollapsed" class="switch" type="checkbox"></label>
+        <label class="toggle-row"><span><strong>收起榜单</strong><small>贴到屏幕边缘，只留方向箭头。</small></span><input id="leaderboardCollapsed" class="switch" type="checkbox"></label>
+        <button id="resetBoardPosition" type="button" class="text-button">重置榜单位置 ↗</button>
       </div>
-      <p class="note">平均流速不是最近一小时的增量。缺少所选指标的帖子不参与排名；窄窗口会自动隐藏浮动榜单。</p>
+      <p class="note">拖动榜单标题调整位置，收起后可上下拖动边缘箭头。平均流速不是最近一小时增量；缺少所选指标的帖子不参与排名。</p>
     </section>
   </main>
   <footer class="app-footer"><div class="save-bar"><span class="save-hint">更改自动保存到本机</span><button id="save" class="primary" type="button">保存设置 <span aria-hidden="true">↗</span></button></div><p id="status" class="status" role="status" aria-live="polite">正在读取设置…</p></footer>

@@ -81,7 +81,13 @@
       const contexts = articles.map((article) => ({ article, ...resolve(article) }));
       const accounts = new Map();
       const authorIds = new Map();
+      const samplesByAuthor = new Map();
       for (const context of contexts) {
+        if (context.author && context.id) {
+          const samples = samplesByAuthor.get(context.author) || [];
+          samples.push({ id: context.id, text: context.text, createdAt: context.metric?.createdAt, replyToId: context.metric?.replyToId, isRepost: context.metric?.isRepost });
+          samplesByAuthor.set(context.author, samples);
+        }
         const account = context.metric?.account;
         if (!account?.id) continue;
         if (context.author) {
@@ -96,10 +102,10 @@
         const avatar = avatarFor(article, author);
         if (!avatar) continue;
         const account = accounts.get(metric?.account?.id || authorIds.get(author)) || metric?.account || {};
-        const signals = global.XA_ACCOUNT_SIGNALS.classify({ account, text });
+        const signals = global.XA_ACCOUNT_SIGNALS.classify({ account, text, samples: samplesByAuthor.get(author) || [] });
         const ai = settings.aiLabelsEnabled ? signals.ai : [];
         const warning = settings.accountWarningsEnabled ? signals.warning : [];
-        if (!ai.length && !warning.length) continue;
+        if (!ai.length && !warning.length && !(settings.aiLabelsEnabled && signals.score > 0)) continue;
         ensureLayer();
         active.add(avatar);
         let record = records.get(avatar);
@@ -128,7 +134,10 @@
         }
         record.element.appendChild(tags);
         if (record.title !== null && anchor.getAttribute('title') !== record.title) record.originalTitle = anchor.getAttribute('title');
-        record.title = [record.originalTitle, 'X-Newfish · 本地规则提示', ai.length ? '疑似 AI 参与' : '', ...ai, ...warning, `检测时间：${record.time}`, '未标记不代表纯人工或正常账号。'].filter(Boolean).join('\n');
+        record.title = [record.originalTitle, 'X-Newfish · 本地规则提示', settings.aiLabelsEnabled ?
+          `${signals.score >= 80 ? '疑似 AI 参与' : signals.score >= 60 ? '待观察' : '证据不足'} · 规则分 ${signals.score}/100（不是概率）\n账号自动化 ${signals.automationScore} / 本帖 AI ${signals.contentScore} · 已观察 ${signals.sampleCount} 条` : '',
+          ...(settings.aiLabelsEnabled ? signals.evidence.map((item) => `+${item.points} ${item.reason}`) : []), ...warning,
+          `检测时间：${record.time}`, '权重尚未校准；未标记不代表纯人工或正常账号。'].filter(Boolean).join('\n');
         anchor.setAttribute('title', record.title);
       }
     }

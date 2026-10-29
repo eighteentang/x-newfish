@@ -115,10 +115,16 @@
     globalKeys.forEach((key) => showValue(key, settings[key]));
     renderRules(); renderSummary();
     ready = true; document.body.setAttribute('aria-busy', 'false');
-    field('version').textContent = `v${chrome.runtime?.getManifest?.().version || '0.1.5'}`;
+    field('version').textContent = `v${chrome.runtime?.getManifest?.().version || '0.2.0'}`;
     setStatus('设置已载入 · 仅保存在本机');
   }).catch(() => setStatus('无法读取设置，请重新打开插件。', true));
   field('save').addEventListener('click', () => save());
+  for (const [button, view] of [['openRelationships', 'relationships'], ['openTrends', 'trends']]) {
+    field(button).addEventListener('click', () => chrome.runtime.sendMessage({ type: 'XA_OPEN_MANAGER', view })
+      .then((reply) => { if (reply?.error) setStatus(reply.error, true); }).catch(() => setStatus('请先重新加载扩展，再打开管理页。', true)));
+  }
+  field('resetBoardPosition').addEventListener('click', () => chrome.storage.local.set({ leaderboardPosition: null, leaderboardDock: { edge: 'right', y: 0.25 }, leaderboardCollapsed: false })
+    .then(() => setStatus('榜单位置已重置')).catch(() => setStatus('重置失败，请重试', true)));
   [...globalKeys, ...XA_CONFIG.FILTER_KEYS, 'inheritGlobal'].forEach((key) => field(key).addEventListener('change', () => save(key)));
   field('filterScope').addEventListener('change', () => { scope = field('filterScope').value; renderRules(); });
   field('leaderboardOpacity').addEventListener('input', () => {

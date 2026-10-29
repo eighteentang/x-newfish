@@ -13,6 +13,8 @@ FILES = (
     'manifest.json', 'background.js', 'config.js', 'content.js',
     'metrics-core.js', 'filter-core.js', 'tweet-metrics.js', 'x-net-hook.js',
     'account-signals.js', 'account-decorations.js',
+    'board-position.js', 'management-core.js', 'data-bridge.js', 'manager-content.js',
+    'management.html', 'management.css', 'management.js', 'docs/AI_SCORING.md',
     'options.html', 'options.css', 'options.js',
     'icons/icon16.png', 'icons/icon32.png', 'icons/icon48.png', 'icons/icon128.png',
     'README.md', 'LICENSE', 'THIRD_PARTY_NOTICES.md',
@@ -37,7 +39,8 @@ def validate():
         if name.endswith(('.html', '.md')):
             refs += re.findall(r'(?:src|href)=["\']([^"\']+)["\']', text)
         if name.endswith('.js'):
-            refs += re.findall(r'importScripts\(["\']([^"\']+)["\']\)', text)
+            for arguments in re.findall(r'importScripts\(([^)]+)\)', text):
+                refs += re.findall(r'["\']([^"\']+)["\']', arguments)
         if name.endswith('.css'):
             refs += re.findall(r'url\(["\']?([^\s)"\']+)', text)
         for ref in refs:

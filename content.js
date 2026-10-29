@@ -239,7 +239,8 @@
       .xa-metrics-grid b { color: white; font-weight: 650; }
       #${LEADERBOARD_ID} {
         position: fixed; top: 88px; right: 14px; z-index: 2147483000;
-        width: 344px; max-height: min(560px, calc(100vh - 112px)); overflow: auto;
+        width: min(344px, calc(100vw - 16px)); max-height: min(560px, calc(100vh - 16px)); overflow: hidden;
+        display: flex; flex-direction: column; min-width: 0;
         box-sizing: border-box; padding: 12px;
         border: 1px solid rgba(255,255,255,.14); border-radius: 12px;
         background: rgba(25, 29, 35, var(--xa-board-opacity, .1)); color: #f3f5f7;
@@ -247,10 +248,17 @@
         backdrop-filter: blur(16px) saturate(120%);
         font: 13px/1.35 system-ui, sans-serif;
       }
-      #${LEADERBOARD_ID} .xa-board-title { display:flex; align-items:baseline; justify-content:space-between; margin-bottom: 8px; }
-      #${LEADERBOARD_ID} .xa-board-title strong { font-size: 14px; }
+      #${LEADERBOARD_ID} .xa-board-title { display:flex; flex: 0 0 auto; align-items:center; justify-content:space-between; gap: 6px; margin-bottom: 8px; cursor: grab; touch-action: none; user-select: none; }
+      #${LEADERBOARD_ID} .xa-board-title strong { font-size: 14px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
       #${LEADERBOARD_ID} .xa-board-title span { color: #aeb7c2; font-size: 11px; }
-      #${LEADERBOARD_ID} .xa-board-toggle { border: 1px solid #657786; border-radius: 5px; padding: 3px 8px; color: inherit; background: transparent; cursor: pointer; font: inherit; }
+      #${LEADERBOARD_ID} .xa-board-toggle, #${LEADERBOARD_ID} .xa-board-reset { flex: 0 0 auto; border: 1px solid #657786; border-radius: 5px; padding: 3px 6px; color: inherit; background: transparent; cursor: pointer; font: inherit; }
+      #${LEADERBOARD_ID} .xa-board-reset { margin-left: auto; font-size: 11px; }
+      #${LEADERBOARD_ID} #xa-board-body { min-height: 0; overflow: auto; overflow-x: hidden; }
+      #${LEADERBOARD_ID}.xa-board-dragging .xa-board-title { cursor: grabbing; }
+      #${LEADERBOARD_ID}.xa-board-collapsed { width: 24px; height: 36px; max-height: 100vh; padding: 0; border: 0; border-radius: 6px; }
+      #${LEADERBOARD_ID}.xa-board-collapsed .xa-board-title { height: 100%; min-height: 0; margin: 0; gap: 0; }
+      #${LEADERBOARD_ID}.xa-board-collapsed .xa-board-title strong, #${LEADERBOARD_ID}.xa-board-collapsed .xa-board-reset { display: none; }
+      #${LEADERBOARD_ID}.xa-board-collapsed .xa-board-toggle { width: 24px; height: 36px; padding: 0; border-radius: 6px; font-size: 24px; line-height: 1; touch-action: none; }
       #${LEADERBOARD_ID} .xa-board-controls { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 6px; }
       #${LEADERBOARD_ID} select { min-width: 0; flex: 1; padding: 5px 3px; border: 1px solid #657786; border-radius: 5px; background: #19232e; color: #f3f5f7; font: inherit; color-scheme: dark; }
       #${LEADERBOARD_ID} .xa-board-summary { margin: 7px 0; color: #aeb7c2; font-size: 11px; line-height: 1.5; }
@@ -271,7 +279,10 @@
         cursor: default;
         white-space: nowrap;
       }
-      @media (max-width: 1180px) { #${LEADERBOARD_ID} { display: none; } }
+      @media (max-width: 360px) {
+        #${LEADERBOARD_ID} { padding: 8px; }
+        #${LEADERBOARD_ID} .xa-board-value { max-width: 90px; overflow: hidden; text-overflow: ellipsis; }
+      }
     `;
     (document.head || document.documentElement).appendChild(style);
   }
@@ -403,13 +414,14 @@
     heading.textContent = '本页排行榜';
     const toggle = document.createElement('button');
     toggle.className = 'xa-board-toggle'; toggle.type = 'button';
+    const reset = document.createElement('button');
+    reset.className = 'xa-board-reset'; reset.type = 'button'; reset.textContent = '重置位置';
     const body = document.createElement('div');
     body.id = 'xa-board-body'; toggle.setAttribute('aria-controls', body.id);
     const controls = document.createElement('div'); controls.className = 'xa-board-controls';
     const summary = document.createElement('p'); summary.className = 'xa-board-summary';
     const listHost = document.createElement('div');
     const savePreference = (next) => chrome.storage.local.set(next).catch(() => { summary.textContent = '榜单设置保存失败，请重试。'; });
-    toggle.addEventListener('click', () => savePreference({ leaderboardCollapsed: !settings.leaderboardCollapsed }));
     const selects = {};
     const choices = [
       ['leaderboardSort', '榜单排序', [['velocity', '按平均流速'], ['views', '按浏览量'], ['likes', '按点赞数'], ['bookmarks', '按收藏数']]],
@@ -424,11 +436,13 @@
       select.addEventListener('change', () => savePreference({ [key]: key === 'leaderboardSort' ? select.value : Number(select.value) }));
       selects[key] = select; controls.appendChild(select);
     }
-    title.appendChild(heading); title.appendChild(toggle);
+    title.appendChild(heading); title.appendChild(reset); title.appendChild(toggle);
     body.appendChild(controls); body.appendChild(summary); body.appendChild(listHost);
     board.appendChild(title); board.appendChild(body);
     board.__xaParts = { toggle, body, summary, listHost, selects };
     document.body.appendChild(board);
+    board.__xaPosition = global.XA_BOARD_POSITION.attach(board, { handle: title, toggle, body, save: savePreference });
+    reset.addEventListener('click', () => board.__xaPosition.reset());
     return board;
   }
 
@@ -437,15 +451,13 @@
     const opacity = Number(settings.leaderboardOpacity);
     board.style.setProperty('--xa-board-opacity', Number.isFinite(opacity) ? String(Math.min(1, Math.max(0, opacity))) : '0.1');
     board.style.display = settings.enabled && settings.leaderboardEnabled ? '' : 'none';
+    board.__xaPosition.update(settings);
     const { toggle, body, summary, listHost, selects } = board.__xaParts;
     if (!settings.enabled || !settings.leaderboardEnabled) {
       listHost.replaceChildren();
       delete board.dataset.signature;
       return;
     }
-    body.hidden = settings.leaderboardCollapsed;
-    toggle.textContent = settings.leaderboardCollapsed ? '展开榜单' : '收起榜单';
-    toggle.setAttribute('aria-expanded', String(!settings.leaderboardCollapsed));
     Object.entries(selects).forEach(([key, select]) => { select.value = String(settings[key]); });
     if (settings.leaderboardCollapsed) return;
     const candidates = [...document.querySelectorAll(SELECTOR)]
@@ -664,7 +676,7 @@
 
   function isExtensionNode(node) {
     const element = node.nodeType === 1 ? node : node.parentElement;
-    return Boolean(element?.closest?.(`#${LEADERBOARD_ID}, .${BADGE_CLASS}, .xa-metrics-tooltip, .${NOTICE_CLASS}, #${STYLE_ID}, #xa-account-marks, #xa-account-mark-style`));
+    return Boolean(element?.closest?.(`#${LEADERBOARD_ID}, .${BADGE_CLASS}, .xa-metrics-tooltip, .${NOTICE_CLASS}, #${STYLE_ID}, #xa-account-marks, #xa-account-mark-style, #xa-relation-task`));
   }
 
   function start() {

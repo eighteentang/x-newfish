@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>X-Newfish · 阅读管理</title><link rel="stylesheet" href="management.css"></head>
+<body>
+<div class="shell">
+  <aside class="sidebar">
+    <a class="brand" href="#relationships"><img src="icons/icon48.png" width="40" height="40" alt=""><span><strong>X-Newfish</strong><small>阅读与观察 / v0.2.0</small></span></a>
+    <nav aria-label="管理分类"><a id="nav-relationships" href="#relationships">关系管理 <span>↗</span></a><a id="nav-trends" href="#trends">趋势监测 <span>↗</span></a></nav>
+    <p class="side-note">数据保存在本机。<br>扫描不会替你关注或取关。</p>
+    <a class="muted" href="https://github.com/eighteentang/x-newfish" target="_blank" rel="noopener noreferrer">使用说明与反馈 ↗</a>
+  </aside>
+  <main>
+    <header class="page-header"><div><span class="eyebrow" id="page-kicker">RELATIONSHIPS</span><h1 id="page-title">看清关注关系</h1><p id="page-description">记录现在的互关，观察之后的变化。</p></div><button id="refresh" type="button">刷新本机结果 ↻</button></header>
+    <p id="status" role="status" aria-live="polite" class="status">正在载入本机数据…</p>
+    <section id="relationships-panel" aria-label="关系管理">
+      <div class="card">
+        <div class="section-title"><h2>开始一次只读扫描</h2><span class="pill">手动启动</span></div>
+        <p class="muted">先打开并登录 X，再读取账号。开始后会打开本人的关注页并自动滚动；请保留该页面，直到任务结束。</p>
+        <div class="form-row"><label class="grow">已打开的 X 账号<select id="x-tab"><option value="">先点击读取账号</option></select></label><button id="read-accounts" type="button">读取 X 账号</button><button id="start-scan" class="primary" type="button">开始扫描</button><button id="stop-scan" type="button" disabled>停止</button></div>
+        <div id="scan-progress" class="notice">首次扫描建立基线，不能追溯安装前的取关历史。</div>
+        <p class="hint">未回关 ≠ 取关。关系信息缺失、账号受限或未扫描完整时，不推断对方已取关。</p>
+      </div>
+      <div class="card">
+        <div class="section-title"><h2>本机关系记录</h2><button id="export-relations" type="button">导出 CSV ↓</button></div>
+        <div class="form-row wrap"><label>记录账号<select id="relation-owner"><option value="">暂无完整记录</option></select></label><label>查看<select id="relation-kind"><option value="nonfollowback">未回关</option><option value="lost">发现取关</option><option value="unknown">状态待确认</option><option value="all">全部已读取</option></select></label><label class="grow">搜索<input id="relation-search" type="search" placeholder="名字或 @用户名"></label></div>
+        <div class="inline"><label><input id="only-blue" type="checkbox"> 仅蓝 V</label><label><input id="show-ignored" type="checkbox"> 包含已忽略</label><label><input id="show-partial" type="checkbox"> 查看最近部分扫描</label></div>
+        <p id="relation-summary" class="muted"></p><div class="table-scroll"><table><thead><tr><th>账号</th><th>关系 / 状态</th><th>粉丝数</th><th>发现时间</th><th>操作</th></tr></thead><tbody id="relation-rows"></tbody></table></div>
+        <p class="hint">发现时间是插件观察到变化的时间，不是准确的取关时间。最多保留 3 个账号的完整记录，每次扫描上限 3000 个关注账号。</p>
+      </div>
+    </section>
+    <section id="trends-panel" aria-label="趋势监测" hidden>
+      <div class="card">
+        <div class="section-title"><h2>你想观察什么？</h2><span class="pill">网页样本</span></div>
+        <form id="target-form" class="form-row"><label>监测类型<select id="target-type"><option value="keyword">关键词 / 短语</option><option value="account">账号</option><option value="post">具体帖子</option></select></label><label class="grow">内容<input id="target-value" required maxlength="300" placeholder="例如 X-Newfish、@用户名或帖子链接"></label><button class="primary" type="submit">添加目标 ＋</button></form>
+        <p class="hint">最多 10 个目标。添加后打开 X 搜索并滚动阅读，再回这里刷新。只保存匹配目标的页面数据；不代表 X 全站总量。</p>
+      </div>
+      <div class="card">
+        <div class="form-row wrap"><label class="grow">监测目标<select id="active-target"><option value="">请先添加目标</option></select></label><label>时间范围<select id="trend-window"><option value="24">过去 24 小时</option><option value="72">过去 72 小时</option><option value="yesterday">昨天 · 北京时间</option></select></label><button id="open-search" type="button">打开 X 搜索 ↗</button><button id="capture-loaded" type="button">读取已加载页面</button></div>
+        <div class="notice">这是已采集样本的统计。空白时段表示没有采集数据，不表示该时段无人讨论；浏览器关闭时不持续监测。</div>
+        <p id="trend-summary" class="muted"></p><div id="trend-stats" class="stats"></div>
+        <div class="section-title"><h2>讨论分布 · 按小时</h2><span class="muted">北京时间</span></div><div id="trend-chart" class="chart" role="img" aria-label="已采集讨论帖小时分布"></div>
+        <p id="trend-comparison" class="hint"></p><details><summary>转发计数、人数与快照如何区分？</summary><p class="hint">带明确发布时间的转发帖子才记为期间转发事件；转发者按用户 ID 去重。累计计数两次之差是净变化，可能为负，不能当成转发次数或人数。缺少时间窗口开始前的快照时不计算净变化；讨论不包含纯转发，也排除被监测账号自己的发帖。</p></details>
+        <p id="snapshot-summary" class="hint"></p><p id="follower-summary" class="hint"></p>
+      </div>
+      <div class="card"><div class="section-title"><h2>采集明细</h2><div><button id="export-trends" type="button">导出 CSV ↓</button><button id="delete-target" type="button" class="danger">删除目标</button></div></div><div class="table-scroll"><table><thead><tr><th>帖子 / 作者</th><th>类型</th><th>发布时间</th><th>采集时间</th></tr></thead><tbody id="trend-rows"></tbody></table></div><p id="storage-summary" class="hint"></p></div>
+    </section>
+  </main>
+</div>
+<script src="management-core.js"></script><script src="management.js"></script>
+</body></html>
