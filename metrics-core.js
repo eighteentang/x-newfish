@@ -43,7 +43,8 @@
     // User objects also have rest_id/legacy.created_at; they are not tweets.
     if (!/^\d+$/.test(id) || (!Object.hasOwn(legacy, 'full_text') && node.__typename !== 'Tweet')) return null;
     const views = asNumber(node.views?.count ?? legacy.views?.count);
-    const user = node.core?.user_results?.result;
+    const rawUser = node.core?.user_results?.result;
+    const user = rawUser?.__typename === 'UserWithVisibilityResults' ? rawUser.user : rawUser;
     const quoted = node.quoted_status_result?.result;
     const reposted = legacy.retweeted_status_result?.result || node.retweeted_status_result?.result;
     const userHandle = (tweet) => String(tweet?.core?.user_results?.result?.core?.screen_name || tweet?.core?.user_results?.result?.legacy?.screen_name || '');

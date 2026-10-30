@@ -4,7 +4,7 @@
 <body aria-busy="true">
 <div class="app">
   <header class="app-header">
-    <div class="brand"><img src="icons/icon32.png" width="34" height="34" alt=""><div><h1>X-Newfish<span id="version">v0.2.0</span></h1><p>把注意力留给好内容</p></div></div>
+    <div class="brand"><img src="icons/icon32.png" width="34" height="34" alt=""><div><h1>X-Newfish<span id="version">v0.2.1</span></h1><p>把注意力留给好内容</p></div></div>
     <label class="master"><input id="enabled" type="checkbox" class="switch" aria-label="启用 X-Newfish"><span id="powerState">运行中</span></label>
   </header>
   <nav class="tabs" role="tablist" aria-label="设置分类">
@@ -25,7 +25,7 @@
         <label class="toggle-row"><span><strong>疑似 AI 标记 <span aria-hidden="true">🟡</span></strong><small>明确 AI 声明或自动化标签；黄色头像框 + AI</small></span><input id="aiLabelsEnabled" class="switch" type="checkbox" aria-label="启用疑似 AI 标记"></label>
         <label class="toggle-row"><span><strong>账号受限提示 <span aria-hidden="true">🔴</span></strong><small>仅依据 X 受限状态；红框 + 橙色问号</small></span><input id="accountWarningsEnabled" class="switch" type="checkbox" aria-label="启用账号受限提示"></label>
       </div>
-      <p class="note">本地规则不调用模型。将鼠标停在已标记头像上查看原因；仅作提示，无法可靠识别普通 AI 代写，未标记不代表纯人工。</p>
+      <p class="note">本地规则不调用模型。开启后，悬浮头像可查看分数，包括零分；保存设置后，下方会显示检查数量和资料覆盖。达到 80 分才加 AI 框，无法可靠识别普通 AI 代写，未标记不代表纯人工。</p>
       <div class="section-heading"><h3>全局规则概况</h3><button type="button" class="text-button" id="openFilters">调整规则 ↗</button></div>
       <div class="rule-stats"><div><b id="keywordCount">0</b><span>关键词</span></div><div><b id="accountCount">0</b><span>屏蔽账号</span></div><div><b id="domainCount">0</b><span>屏蔽域名</span></div></div>
       <p class="note" id="globalSummary">正在读取设置…</p>

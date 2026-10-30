@@ -18,7 +18,8 @@
     const requestCursor = short(variables.cursor, 2000);
     const first = !requestCursor;
     const owner = unwrap(payload?.data?.user?.result);
-    const instructions = owner?.timeline?.timeline?.instructions || owner?.timeline?.instructions;
+    const instructions = owner?.timeline?.timeline?.instructions || owner?.timeline?.instructions ||
+      owner?.timeline_v2?.timeline?.instructions || owner?.timeline_v2?.instructions;
     const relation = { ownerId, users: [], first, end: false, valid: false, requestCursor, cursor: null,
       expectedTotal: countOf(owner?.relationship_counts?.following) ?? countOf(owner?.legacy?.friends_count) };
     const followerCount = countOf(owner?.relationship_counts?.followers) ?? countOf(owner?.legacy?.followers_count);

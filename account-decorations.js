@@ -77,6 +77,7 @@
 
   function sync(articles, settings, resolve) {
     const active = new Set();
+    const stats = { checked: 0, profiles: 0, avatars: 0, ai: 0, warnings: 0 };
     if (settings.enabled && (settings.aiLabelsEnabled || settings.accountWarningsEnabled)) {
       const contexts = articles.map((article) => ({ article, ...resolve(article) }));
       const accounts = new Map();
@@ -99,13 +100,18 @@
       }
       for (const { article, metric, author, text, id } of contexts) {
         if (!id) continue; // Reply drafts do not represent posts.
-        const avatar = avatarFor(article, author);
-        if (!avatar) continue;
         const account = accounts.get(metric?.account?.id || authorIds.get(author)) || metric?.account || {};
         const signals = global.XA_ACCOUNT_SIGNALS.classify({ account, text, samples: samplesByAuthor.get(author) || [] });
+        stats.checked++;
+        if (typeof account.bio === 'string' || typeof account.automated === 'boolean' || account.restriction) stats.profiles++;
+        const avatar = avatarFor(article, author);
+        if (!avatar) continue;
+        stats.avatars++;
         const ai = settings.aiLabelsEnabled ? signals.ai : [];
         const warning = settings.accountWarningsEnabled ? signals.warning : [];
-        if (!ai.length && !warning.length && !(settings.aiLabelsEnabled && signals.score > 0)) continue;
+        if (ai.length) stats.ai++;
+        if (warning.length) stats.warnings++;
+        if (!ai.length && !warning.length && !settings.aiLabelsEnabled) continue;
         ensureLayer();
         active.add(avatar);
         let record = records.get(avatar);
@@ -146,6 +152,7 @@
     }
     if (!records.size) { layer?.remove(); layer = null; }
     else position();
+    return stats;
   }
 
   global.addEventListener('scroll', schedulePosition, { capture: true, passive: true });

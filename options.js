@@ -58,7 +58,12 @@
     const replies = await Promise.all(tabs.map((tab) => chrome.tabs.sendMessage(tab.id, { type: 'XA_SETTINGS_APPLY' }).catch(() => null)));
     if (replies.some((reply) => !reply?.ready)) return '已保存；部分 X 页面未响应。请重新加载 X-Newfish，再刷新 X。';
     const sum = (key) => replies.reduce((total, reply) => total + reply[key], 0);
-    return `已生效：检测到 ${sum('total')} 条帖子，已过滤 ${sum('hidden')} 条；${sum('velocity')} 条有流速，${sum('language')} 条有语言信息。`;
+    const marks = settings.aiLabelsEnabled || settings.accountWarningsEnabled;
+    const diagnostics = replies.every((reply) => reply.accountChecks && Number.isFinite(reply.accountChecks.checked));
+    const counts = (key) => replies.reduce((total, reply) => total + (reply.accountChecks?.[key] || 0), 0);
+    const accountStatus = !marks ? '' : !diagnostics ? ' 账号检查状态不可读取，请更新扩展并刷新 X 页面。' :
+      ` 账号检查：${counts('checked')} 条帖子，${counts('profiles')} 条有账号资料，${counts('avatars')} 个头像可定位；AI 标记 ${counts('ai')} 个，受限提示 ${counts('warnings')} 个。未达到 80 分不加 AI 框；缺资料时只能检查正文。`;
+    return `已生效：检测到 ${sum('total')} 条帖子，已过滤 ${sum('hidden')} 条；${sum('velocity')} 条有流速，${sum('language')} 条有语言信息。${accountStatus}`;
   }
   function validateHandles(value) {
     return XA_CONFIG.normalizeKeywords(value).every((item) => XA_CONFIG.normalizeHandles([item]).length);
@@ -115,7 +120,7 @@
     globalKeys.forEach((key) => showValue(key, settings[key]));
     renderRules(); renderSummary();
     ready = true; document.body.setAttribute('aria-busy', 'false');
-    field('version').textContent = `v${chrome.runtime?.getManifest?.().version || '0.2.0'}`;
+    field('version').textContent = `v${chrome.runtime?.getManifest?.().version || '0.2.1'}`;
     setStatus('设置已载入 · 仅保存在本机');
   }).catch(() => setStatus('无法读取设置，请重新打开插件。', true));
   field('save').addEventListener('click', () => save());

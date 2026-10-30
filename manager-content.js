@@ -29,11 +29,21 @@
       location.pathname.toLowerCase().replace(/\/$/, '') === `/${job.handle.toLowerCase()}/following`;
   }
   function removeUI() { document.getElementById('xa-relation-task')?.remove(); }
-  function stop() {
+  function stop(note) {
     clearInterval(timer);
     timer = null;
     active = null;
     removeUI();
+    if (note && document.body) {
+      const box = document.createElement('div');
+      box.id = 'xa-relation-task';
+      box.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:2147483647;padding:14px;background:#17202a;color:#fff;border:1px solid #697b8a;border-radius:12px;font:14px/1.5 system-ui;max-width:320px;';
+      const label = document.createElement('span');
+      label.textContent = `X-Newfish：${note}。详细结果请回到关系管理页查看。 `;
+      const close = document.createElement('button');
+      close.type = 'button'; close.textContent = '关闭提示'; close.addEventListener('click', removeUI);
+      box.append(label, close); document.body.append(box);
+    }
   }
   async function send(message) {
     try {
@@ -41,12 +51,12 @@
       if (reply?.error) { if (active) finish(`后台处理失败：${String(reply.error).slice(0, 100)}`); return null; }
       return reply;
     }
-    catch (_) { stop(); return null; }
+    catch (_) { stop('与扩展后台的连接已断开，请重新加载扩展并刷新此页'); return null; }
   }
   function finish(note) {
     if (!active) return;
     const jobId = active.id;
-    stop();
+    stop(note);
     void send({ type: 'XA_RELATION_FINISH', jobId, complete: false, note });
   }
   function showUI() {
@@ -82,14 +92,16 @@
       const jobState = active;
       if (!jobState || jobState.busy) return;
       if (!matches(jobState)) { finish('页面或登录账号已变化，扫描中断'); return; }
-      if (Date.now() - jobState.startedAt >= 300000) { finish('扫描达到五分钟上限，未确认完整'); return; }
-      if (Date.now() - jobState.lastValid >= 25000) { finish('25 秒未收到有效关注分页，未确认完整'); return; }
+      if (Date.now() - jobState.startedAt >= 1800000) { finish('扫描达到三十分钟上限，未确认完整'); return; }
+      if (Date.now() - jobState.lastValid >= 90000) { finish('90 秒未收到有效关注分页，可能加载缓慢或已被限流；未确认完整，保留历史记录'); return; }
       jobState.busy = true;
       showUI();
       const response = await send({ type: 'XA_RELATION_HEARTBEAT', jobId: jobState.id, viewerId: jobState.viewerId });
       if (active !== jobState) return;
       jobState.busy = false;
-      if (['complete', 'partial', 'error'].includes(response?.jobStatus)) { stop(); return; }
+      if (['complete', 'partial', 'error'].includes(response?.jobStatus)) { stop(response.jobNote || '扫描已结束，完整性以管理页结果为准'); return; }
+      const label = document.getElementById('xa-relation-task')?.querySelector('span');
+      if (label) label.textContent = `正在只读扫描关注列表 · 已读取 ${response?.jobCount || 0} 个账号 · ${Math.floor((Date.now() - jobState.lastValid) / 1000)} 秒前收到分页… `;
       window.scrollTo({ top: window.scrollY + Math.max(400, window.innerHeight * 0.9), behavior: 'instant' });
     }, 1200);
     return true;
@@ -138,14 +150,14 @@
     captureQueue = captureQueue.then(async () => {
       const jobId = active?.id;
       const response = await send(message);
-      if (active?.id === jobId && ['complete', 'partial', 'error'].includes(response?.jobStatus)) stop();
-    }).catch(() => stop());
+      if (active?.id === jobId && ['complete', 'partial', 'error'].includes(response?.jobStatus)) stop(response.jobNote || '扫描已结束，完整性以管理页结果为准');
+    }).catch(() => stop('处理页面数据失败，本次扫描未确认完整'));
   });
   chrome.runtime.onMessage.addListener((message, _sender, respond) => {
     if (message?.type === 'XA_MANAGER_REPLAY') { window.postMessage({ type: 'XA_MANAGER_REPLAY' }, location.origin); respond({ ok: true }); return; }
     if (message?.type === 'XA_PAGE_STATUS') { respond({ viewer: viewer(), url: location.href }); return; }
     if (message?.type === 'XA_RELATION_RUN') { respond({ started: begin(message.job) }); return; }
-    if (message?.type === 'XA_RELATION_CANCEL') { stop(); respond({ stopped: true }); }
+    if (message?.type === 'XA_RELATION_CANCEL') { stop(message.note || '扫描已停止；本次结果可能不完整'); respond({ stopped: true }); }
   });
   async function ready() {
     const current = viewer();

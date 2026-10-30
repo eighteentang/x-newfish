@@ -21,7 +21,7 @@ async function stopJob(job, note, status = 'partial') {
   if (!job || job.status !== 'running') return job;
   job.status = status; job.note = note; job.finishedAt = Date.now(); job.complete = false;
   await storeJob(job);
-  chrome.tabs.sendMessage(job.tabId, { type: 'XA_RELATION_CANCEL' }).catch(() => {});
+  chrome.tabs.sendMessage(job.tabId, { type: 'XA_RELATION_CANCEL', note }).catch(() => {});
   return job;
 }
 
@@ -90,7 +90,7 @@ async function capture(message, sender) {
     await chrome.storage.local.set({ [DATA_KEY]: data, [JOB_KEY]: job });
   } else if (!job.nextCursor) await stopJob(job, '未找到下一页游标，无法确认完整；保留历史');
   else await storeJob(job);
-  return { jobStatus: job.status };
+  return { jobStatus: job.status, jobNote: job.note, jobCount: job.count };
 }
 
 chrome.runtime.onMessage.addListener((message, sender, respond) => {
@@ -110,7 +110,8 @@ chrome.runtime.onMessage.addListener((message, sender, respond) => {
       const job = await jobState();
       if (!job || job.id !== message.jobId || job.tabId !== sender.tab.id) return { jobStatus: 'partial' };
       if (job.viewerId !== M.id(message.viewerId)) await stopJob(job, '账号已变化', 'error');
-      return { jobStatus: job.status };
+      else if (job.status === 'running' && Date.now() - (job.lastHeartbeatAt || 0) >= 15000) { job.lastHeartbeatAt = Date.now(); await storeJob(job); }
+      return { jobStatus: job.status, jobNote: job.note, jobCount: job.count };
     }
     if (type === 'XA_RELATION_FINISH' && fromPage) {
       const job = await jobState();
@@ -128,7 +129,7 @@ chrome.runtime.onMessage.addListener((message, sender, respond) => {
     }
     if (type === 'XA_MANAGER_GET') {
       let job = await jobState();
-      if (job?.status === 'running' && Date.now() - job.startedAt > 6 * 60000) job = await stopJob(job, '任务已超过时限；结果不完整，未覆盖历史记录');
+      if (job?.status === 'running' && (Date.now() - job.startedAt > 31 * 60000 || Date.now() - (job.lastHeartbeatAt || job.startedAt) > 2 * 60000)) job = await stopJob(job, '扫描页面长时间未响应或任务已超过时限；结果不完整，未覆盖历史记录');
       const data = await state(); if (M.prune(data)) await chrome.storage.local.set({ [DATA_KEY]: data });
       return { data, job };
     }

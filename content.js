@@ -13,6 +13,7 @@
   let observer;
   let refreshTimer;
   let lastPagePath = global.location?.pathname || '';
+  let accountChecks = {};
 
   const formatVelocity = XA_METRICS.formatVelocity;
 
@@ -656,10 +657,10 @@
         if (!article.isConnected) { record.element.remove(); filterNotices.delete(article); }
       }
       document.querySelectorAll(SELECTOR).forEach(renderArticle);
-      global.XA_ACCOUNT_MARKS?.sync([...document.querySelectorAll(SELECTOR)], settings, (article) => {
+      accountChecks = global.XA_ACCOUNT_MARKS?.sync([...document.querySelectorAll(SELECTOR)], settings, (article) => {
         const metric = getArticleMetrics(article);
         return { id: articleId(article), metric, author: authorHandle(article, metric), text: articleText(article) || metric?.text || '' };
-      });
+      }) || {};
       renderLeaderboard();
     } finally {
       observer?.observe(document.body, observerOptions);
@@ -731,7 +732,8 @@
       sendResponse({ ready: true, total: articles.length,
         hidden: articles.filter((article) => originalDisplays.has(article)).length,
         velocity: articles.filter((article) => Number.isFinite(getArticleMetrics(article)?.velocity)).length,
-        language: articles.filter((article) => articleLanguage(article, getArticleMetrics(article))).length });
+        language: articles.filter((article) => articleLanguage(article, getArticleMetrics(article))).length,
+        accountChecks });
     }).catch(() => sendResponse({ ready: false }));
     return true;
   });
